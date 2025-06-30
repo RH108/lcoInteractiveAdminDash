@@ -200,13 +200,24 @@ async function addEventRequest() {
     console.log("Attempting to submit new event request:", eventData);
 
     try {
-        // TODO: Replace this with an actual fetch to your backend API for event requests
-        // Example: const response = await fetch('/api/event-requests', { ... });
-        // For now, simulating success
-        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
-        console.log("Event request simulated successfully.");
+        // Replace this with an actual fetch to your backend API for event requests
+        const response = await fetch('/api/event-requests', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(eventData),
+        });
 
-        // Clear form fields after simulated success
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`HTTP error! Status: ${response.status}, Message: ${errorData.message || 'Unknown error during event request add'}`);
+        }
+
+        const result = await response.json();
+        console.log("Event request submitted successfully:", result);
+
+        // Clear form fields after successful submission
         eventNameInput.value = '';
         eventDescriptionInput.value = '';
         eventDateInput.value = '';

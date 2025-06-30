@@ -8,26 +8,12 @@ const mongoose = require('mongoose'); // Import Mongoose
 const app = express();
 const port = process.env.PORT || 3000; // Use port 3000 by default or an environment variable
 
-
-app.set('trust proxy', 1); // Trust first proxy (Render's proxy)
-
-// Then your session middleware
-app.use(session({
-    secret: process.env.SESSION_SECRET,
-    resave: false,
-    saveUninitialized: true,
-    cookie: {
-        secure: true,
-        httpOnly: true,
-        sameSite: 'lax'
-    }
-}));
-
 // Roblox OAuth Configuration
 const robloxConfig = {
     clientId: process.env.ROBLOX_CLIENT_ID,
     clientSecret: process.env.ROBLOX_CLIENT_SECRET,
-    redirectUri: `https://lcointeractiveadmindash.onrender.com/callback`, // Ensure this matches your Roblox app settings
+    // Use an environment variable for the deployed URL, fallback to localhost for local dev
+    redirectUri: process.env.RENDER_EXTERNAL_URL ? `${process.env.RENDER_EXTERNAL_URL}/callback` : `http://localhost:${port}/callback`,
     authorizationUrl: 'https://apis.roblox.com/oauth/v1/authorize',
     tokenUrl: 'https://apis.roblox.com/oauth/v1/token',
     userInfoUrl: 'https://apis.roblox.com/oauth/v1/userinfo',
@@ -41,11 +27,16 @@ const robloxGroupConfig = {
 };
 
 // Express Session Middleware
+app.set('trust proxy', 1); // Trust first proxy (Render's proxy)
 app.use(session({
     secret: process.env.SESSION_SECRET, // Use a strong, random string for your session secret
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: process.env.NODE_ENV === 'production' } // Use secure cookies in production (HTTPS)
+    cookie: {
+        secure: process.env.NODE_ENV === 'production', // Use secure cookies in production (HTTPS)
+        httpOnly: true,
+        sameSite: 'lax' // Or 'none' if you're dealing with cross-site iframes, but 'lax' is usually safer default
+    }
 }));
 
 // Serve static files from the current directory (assuming index.html is here)
@@ -77,6 +68,26 @@ const blacklistEntrySchema = new mongoose.Schema({
 });
 
 const BlacklistEntry = mongoose.model('BlacklistEntry', blacklistEntrySchema);
+
+
+// --- NEW: MongoDB Schema and Model for Event/Insert Requests ---
+const eventRequestSchema = new mongoose.Schema({
+    name: { type: String, required: true },
+    description: { type: String },
+    date: { type: Date }, // Store as Date object
+    type: { type: String, required: true, enum: ['Event', 'Insert', 'Other'] }, // Enforce specific types
+    status: { type: String, default: 'Pending', enum: ['Pending', 'Approved', 'Denied'] }, // Status of the request
+    submittedBy: {
+        userId: { type: String },
+        username: { type: String }
+    },
+    createdAt: { type: Date, default: Date.now }
+}, {
+    collection: 'admin_requests' // Collection name as requested
+});
+
+const EventRequest = mongoose.model('EventRequest', eventRequestSchema);
+
 
 // --- Roblox OAuth Routes ---
 
@@ -153,7 +164,7 @@ app.get('/logout', (req, res) => {
     });
 });
 
-// --- NEW API Endpoint: Check Group Membership ---
+// --- API Endpoint: Check Group Membership ---
 app.get('/api/check-group-membership', async (req, res) => {
     // Ensure user is logged in and group config is set
     if (!req.session.user || !req.session.user.sub) {
@@ -261,8 +272,47 @@ app.delete('/api/blacklist/:id', async (req, res) => {
 });
 
 
+// --- NEW: Event Request API Endpoints (using Mongoose) ---
+
+// GET all event requests
+app.get('/api/event-requests', async (req, res) => {
+    try {
+        const requests = await EventRequest.find({});
+        res.json(requests);
+    } catch (error) {
+        console.error('Error fetching event requests:', error);
+        res.status(500).json({ message: 'Error fetching event requests' });
+    }
+});
+
+// POST a new event request
+app.post('/api/event-requests', async (req, res) => {
+    const { name, description, date, type } = req.body;
+
+    if (!name || !type) {
+        return res.status(400).json({ message: 'Event Name and Type are required.' });
+    }
+
+    try {
+        const newRequest = new EventRequest({
+            name,
+            description: description || '', // Ensure description is stored even if empty
+            date: date ? new Date(date) : undefined, // Convert date string to Date object, handle optional
+            type,
+            status: 'Pending', // Default status
+            submittedBy: req.session.user ? { userId: req.session.user.sub, username: req.session.user.name } : undefined
+        });
+
+        const savedRequest = await newRequest.save();
+        res.status(201).json({ message: 'Event request submitted successfully!', request: savedRequest });
+    } catch (error) {
+        console.error('Error submitting event request:', error);
+        res.status(500).json({ message: 'Error submitting event request' });
+    }
+});
+
 // Start the server
 app.listen(port, () => {
-    console.log(`Server running at https://lcointeractiveadmindash.onrender.com`);
-    console.log(`Open your browser to https://lcointeractiveadmindash.onrender.com`);
+    console.log(`Server running at http://localhost:${port}`);
+    console.log(`Open your browser to http://localhost:${port}`);
 });
