@@ -1,5 +1,20 @@
 require('dotenv').config(); // Load environment variables
 const express = require('express');
+
+app.set('trust proxy', 1); // Trust first proxy (Render's proxy)
+
+// Then your session middleware
+app.use(session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+        secure: true,
+        httpOnly: true,
+        sameSite: 'lax'
+    }
+}));
+
 const session = require('express-session');
 const axios = require('axios');
 const path = require('path');
