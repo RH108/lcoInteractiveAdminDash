@@ -1,5 +1,13 @@
 require('dotenv').config(); // Load environment variables
 const express = require('express');
+const session = require('express-session');
+const axios = require('axios');
+const path = require('path');
+const mongoose = require('mongoose'); // Import Mongoose
+
+const app = express();
+const port = process.env.PORT || 3000; // Use port 3000 by default or an environment variable
+
 
 app.set('trust proxy', 1); // Trust first proxy (Render's proxy)
 
@@ -14,14 +22,6 @@ app.use(session({
         sameSite: 'lax'
     }
 }));
-
-const session = require('express-session');
-const axios = require('axios');
-const path = require('path');
-const mongoose = require('mongoose'); // Import Mongoose
-
-const app = express();
-const port = process.env.PORT || 3000; // Use port 3000 by default or an environment variable
 
 // Roblox OAuth Configuration
 const robloxConfig = {
