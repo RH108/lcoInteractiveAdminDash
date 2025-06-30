@@ -223,14 +223,72 @@ async function addEventRequest() {
         eventDateInput.value = '';
         eventTypeSelect.value = ''; // Reset select to default option
 
-        // You might want to refresh a table of requests here if you implement one
-        // fetchEventRequests();
+        // Refresh the list of event requests after a successful submission
+        await fetchEventRequests();
 
         return true;
     } catch (error) {
         console.error('Error submitting event request:', error);
         // showMessageModal(`Failed to submit event request: ${error.message}`);
         return false;
+    }
+}
+
+/**
+ * Fetches event/insert requests from the backend API and populates the requests list.
+ */
+async function fetchEventRequests() {
+    const requestsListContainer = document.getElementById('event-requests-list'); // Get the container div
+
+    if (!requestsListContainer) {
+        console.error("Event requests list container with ID 'event-requests-list' not found. Cannot fetch requests.");
+        return;
+    }
+    requestsListContainer.innerHTML = ''; // Clear existing requests to prevent duplicates
+
+    try {
+        const response = await fetch('/api/event-requests');
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP error! Status: ${response.status}. Response: ${errorText}`);
+        }
+
+        const requests = await response.json();
+        console.log("Fetched event requests:", requests);
+
+        if (requests.length === 0) {
+            requestsListContainer.innerHTML = '<p class="text-gray-500">No pending requests.</p>';
+            return;
+        }
+
+        requests.forEach(request => {
+            const requestDiv = document.createElement('div');
+            requestDiv.className = 'border rounded-lg p-4 flex items-center justify-between hover:bg-gray-50';
+            requestDiv.innerHTML = `
+                <div>
+                    <p class="font-semibold">${request.type}: ${request.name}</p>
+                    <p class="text-sm text-gray-500">Submitted by: ${request.submittedBy && request.submittedBy.username ? request.submittedBy.username : 'Unknown'}</p>
+                    ${request.description ? `<p class="text-sm text-gray-600 mt-1">${request.description}</p>` : ''}
+                    ${request.date ? `<p class="text-sm text-gray-500">Date: ${new Date(request.date).toLocaleDateString()}</p>` : ''}
+                    <p class="text-sm text-gray-500">Status: ${request.status}</p>
+                </div>
+                <div class="space-x-2">
+                    <button class="text-sm bg-green-500 hover:bg-green-700 text-white py-1 px-3 rounded-lg approve-btn" data-id="${request._id}">Approve</button>
+                    <button class="text-sm bg-red-500 hover:bg-red-700 text-white py-1 px-3 rounded-lg deny-btn" data-id="${request._id}">Deny</button>
+                </div>
+            `;
+            requestsListContainer.appendChild(requestDiv);
+
+            // TODO: Add event listeners for approve/deny buttons if backend endpoints are implemented
+            // requestDiv.querySelector('.approve-btn').addEventListener('click', async () => { /* call approve API */ });
+            // requestDiv.querySelector('.deny-btn').addEventListener('click', async () => { /* call deny API */ });
+        });
+
+    } catch (error) {
+        console.error('Error fetching event requests:', error);
+        requestsListContainer.innerHTML = '<p class="text-red-500">Failed to load requests. Please try again.</p>';
+        // showMessageModal('Error loading event requests. Please try again later.');
     }
 }
 
@@ -415,10 +473,10 @@ document.addEventListener('DOMContentLoaded', async function () {
                     if (targetId === 'blacklists') {
                         fetchBlacklistEntries(); // This will refresh the table and update the count
                     }
-                    // If the "Requests" section is activated, you might want to fetch event requests here
-                    // if (targetId === 'requests') {
-                    //     fetchEventRequests(); // Assuming you'll implement this later
-                    // }
+                    // If the "Requests" section is activated, fetch event requests
+                    if (targetId === 'requests') {
+                        fetchEventRequests(); // Fetch and display event requests
+                    }
                 } else {
                     console.error(`Content section with ID '${targetId}' not found.`);
                 }
@@ -447,9 +505,9 @@ document.addEventListener('DOMContentLoaded', async function () {
                     fetchBlacklistEntries(); // This will refresh the table and update the count
                 }
                 // If the initial section is 'requests', fetch data immediately
-                // if (initialTargetId === 'requests') {
-                //     fetchEventRequests(); // Assuming you'll implement this later
-                // }
+                if (initialTargetId === 'requests') {
+                    fetchEventRequests(); // Fetch and display event requests
+                }
             }
         } else {
              // Default to showing the 'home' section if no active link is set

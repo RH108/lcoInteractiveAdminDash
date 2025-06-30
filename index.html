@@ -8,7 +8,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="icon" href="AdminPanelFavicon.png" type="image/x-icon">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Assuming style.css contains additional custom styles -->
     <link rel="stylesheet" href="style.css">
@@ -105,11 +104,11 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         <div class="bg-white p-6 rounded-lg shadow-lg">
                             <h3 class="text-lg font-medium text-gray-700">Total Concurrent Users</h3>
-                            <p class="text-3xl font-bold text-black-600 mt-2">0</p>
+                            <p class="text-3xl font-bold text-black-600 mt-2">1,257</p>
                         </div>
                         <div class="bg-white p-6 rounded-lg shadow-lg">
                             <h3 class="text-lg font-medium text-gray-700">New Event/Insert Requests</h3>
-                            <p class="text-3xl font-bold text-black-600 mt-2">0</p>
+                            <p class="text-3xl font-bold text-black-600 mt-2">8</p>
                         </div>
                         <div class="bg-white p-6 rounded-lg shadow-lg">
                             <h3 class="text-lg font-medium text-gray-700">Blacklisted Users</h3>
@@ -167,31 +166,10 @@
                             </button>
                         </div>
                         <p class="text-gray-600">Review and approve or deny incoming event insertion requests.</p>
-                        <div class="mt-6 space-y-4">
-                            <div class="border rounded-lg p-4 flex items-center justify-between hover:bg-gray-50">
-                                <div>
-                                    <p class="font-semibold">Event: Summer Festival</p>
-                                    <p class="text-sm text-gray-500">Submitted by: John Doe</p>
-                                </div>
-                                <div class="space-x-2">
-                                    <button
-                                        class="text-sm bg-green-500 hover:bg-green-700 text-white py-1 px-3 rounded-lg">Approve</button>
-                                    <button
-                                        class="text-sm bg-red-500 hover:bg-red-700 text-white py-1 px-3 rounded-lg">Deny</button>
-                                </div>
-                            </div>
-                            <div class="border rounded-lg p-4 flex items-center justify-between hover:bg-gray-50">
-                                <div>
-                                    <p class="font-semibold">Event: Tech Conference 2025</p>
-                                    <p class="text-sm text-gray-500">Submitted by: Jane Smith</p>
-                                </div>
-                                <div class="space-x-2">
-                                    <button
-                                        class="text-sm bg-green-500 hover:bg-green-700 text-white py-1 px-3 rounded-lg">Approve</button>
-                                    <button
-                                        class="text-sm bg-red-500 hover:bg-red-700 text-white py-1 px-3 rounded-lg">Deny</button>
-                                </div>
-                            </div>
+                        <!-- ADDED ID TO THIS DIV -->
+                        <div id="event-requests-list" class="mt-6 space-y-4">
+                            <!-- Event requests will be loaded here by script.js -->
+                            <!-- Existing static content removed, will be replaced by dynamic data -->
                         </div>
                     </div>
                 </section>
