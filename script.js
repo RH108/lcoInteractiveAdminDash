@@ -8,6 +8,7 @@
 async function fetchBlacklistEntries() {
     const tableBody = document.querySelector('#blacklist-table tbody');
     const blacklistedUsersCountElement = document.getElementById('blacklisted-users-count'); // Get the new count element
+    const adminRequestCountElement = document.getElementById('admin-request-count')
 
     // Log an error and return if the table body is not found
     if (!tableBody) {
@@ -32,6 +33,10 @@ async function fetchBlacklistEntries() {
         // Update the blacklisted users count
         if (blacklistedUsersCountElement) {
             blacklistedUsersCountElement.textContent = entries.length;
+        }
+
+        if (adminRequestCountElement) {
+            adminRequestCountElement.textContent = entries.length;
         }
 
         // Iterate over each entry and append it as a new row to the table

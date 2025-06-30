@@ -8,6 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="icon" href="AdminPanelFavicon.png" type="image/x-icon">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Assuming style.css contains additional custom styles -->
     <link rel="stylesheet" href="style.css">
@@ -104,11 +105,11 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         <div class="bg-white p-6 rounded-lg shadow-lg">
                             <h3 class="text-lg font-medium text-gray-700">Total Concurrent Users</h3>
-                            <p class="text-3xl font-bold text-black-600 mt-2">1,257</p>
+                            <p class="text-3xl font-bold text-black-600 mt-2">0</p>
                         </div>
                         <div class="bg-white p-6 rounded-lg shadow-lg">
                             <h3 class="text-lg font-medium text-gray-700">New Event/Insert Requests</h3>
-                            <p class="text-3xl font-bold text-black-600 mt-2">8</p>
+                            <p id="admin-request-count" class="text-3xl font-bold text-black-600 mt-2">0</p>
                         </div>
                         <div class="bg-white p-6 rounded-lg shadow-lg">
                             <h3 class="text-lg font-medium text-gray-700">Blacklisted Users</h3>
