@@ -12,7 +12,7 @@ const port = process.env.PORT || 3000; // Use port 3000 by default or an environ
 const robloxConfig = {
     clientId: process.env.ROBLOX_CLIENT_ID,
     clientSecret: process.env.ROBLOX_CLIENT_SECRET,
-    redirectUri: `http://localhost:${port}/callback`, // Ensure this matches your Roblox app settings
+    redirectUri: `https://lcointeractiveadmindash.onrender.com/callback`, // Ensure this matches your Roblox app settings
     authorizationUrl: 'https://apis.roblox.com/oauth/v1/authorize',
     tokenUrl: 'https://apis.roblox.com/oauth/v1/token',
     userInfoUrl: 'https://apis.roblox.com/oauth/v1/userinfo',
@@ -248,6 +248,6 @@ app.delete('/api/blacklist/:id', async (req, res) => {
 
 // Start the server
 app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
-    console.log(`Open your browser to http://localhost:${port}`);
+    console.log(`Server running at https://lcointeractiveadmindash.onrender.com`);
+    console.log(`Open your browser to https://lcointeractiveadmindash.onrender.com`);
 });
