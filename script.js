@@ -164,6 +164,67 @@ async function deleteBlacklistEntry(id) {
 }
 
 /**
+ * Handles adding a new event/insert request.
+ * For now, this just logs the data. You'll need a backend endpoint for this.
+ * @returns {boolean} True if the request was seemingly successful, false otherwise.
+ */
+async function addEventRequest() {
+    const eventNameInput = document.getElementById('event-name-input');
+    const eventDescriptionInput = document.getElementById('event-description-input');
+    const eventDateInput = document.getElementById('event-date-input');
+    const eventTypeSelect = document.getElementById('event-type-select');
+
+    if (!eventNameInput || !eventDescriptionInput || !eventDateInput || !eventTypeSelect) {
+        console.error("One or more input elements for event request not found. Cannot add request.");
+        return false;
+    }
+
+    const eventName = eventNameInput.value.trim();
+    const eventDescription = eventDescriptionInput.value.trim();
+    const eventDate = eventDateInput.value; // Date input value is already a string in 'YYYY-MM-DD' format
+    const eventType = eventTypeSelect.value;
+
+    if (!eventName || !eventType) {
+        console.warn('Event Name and Type are required for adding an event request.');
+        // showMessageModal('Event Name and Type are required.');
+        return false;
+    }
+
+    const eventData = {
+        name: eventName,
+        description: eventDescription,
+        date: eventDate, // Can be empty string if optional
+        type: eventType
+    };
+
+    console.log("Attempting to submit new event request:", eventData);
+
+    try {
+        // TODO: Replace this with an actual fetch to your backend API for event requests
+        // Example: const response = await fetch('/api/event-requests', { ... });
+        // For now, simulating success
+        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate network delay
+        console.log("Event request simulated successfully.");
+
+        // Clear form fields after simulated success
+        eventNameInput.value = '';
+        eventDescriptionInput.value = '';
+        eventDateInput.value = '';
+        eventTypeSelect.value = ''; // Reset select to default option
+
+        // You might want to refresh a table of requests here if you implement one
+        // fetchEventRequests();
+
+        return true;
+    } catch (error) {
+        console.error('Error submitting event request:', error);
+        // showMessageModal(`Failed to submit event request: ${error.message}`);
+        return false;
+    }
+}
+
+
+/**
  * Displays a message to the user and attempts to close the window.
  * @param {string} message The message to display.
  */
@@ -217,11 +278,17 @@ document.addEventListener('DOMContentLoaded', async function () {
     const sidebarLinks = document.querySelectorAll('.sidebar-link'); // Navigation links in the sidebar
     const contentTitle = document.getElementById('content-title'); // Title in the header
 
-    // --- Modal Elements ---
+    // --- Blacklist Modal Elements ---
     const blacklistModal = document.getElementById('blacklist-modal');
-    const modalOpenBtn = document.getElementById('open-modal-btn'); // Button to open the blacklist add modal
-    const modalCloseBtnCancel = document.getElementById('close-modal-btn-cancel'); // Cancel button in modal
-    const modalSaveBtn = document.getElementById('save-blacklist-btn'); // Save button in modal
+    const blacklistModalOpenBtn = document.getElementById('open-modal-btn'); // Button to open the blacklist add modal
+    const blacklistModalCloseBtnCancel = document.getElementById('close-modal-btn-cancel'); // Cancel button in blacklist modal
+    const blacklistModalSaveBtn = document.getElementById('save-blacklist-btn'); // Save button in blacklist modal
+
+    // --- Event Request Modal Elements ---
+    const eventRequestModal = document.getElementById('event-request-modal');
+    const eventModalOpenBtn = document.getElementById('open-event-modal-btn'); // Button to open the event request modal
+    const eventModalCloseBtnCancel = document.getElementById('close-event-modal-btn-cancel'); // Cancel button in event modal
+    const eventModalSaveBtn = document.getElementById('save-event-request-btn'); // Save button in event modal
 
 
     /**
@@ -337,6 +404,10 @@ document.addEventListener('DOMContentLoaded', async function () {
                     if (targetId === 'blacklists') {
                         fetchBlacklistEntries(); // This will refresh the table and update the count
                     }
+                    // If the "Requests" section is activated, you might want to fetch event requests here
+                    // if (targetId === 'requests') {
+                    //     fetchEventRequests(); // Assuming you'll implement this later
+                    // }
                 } else {
                     console.error(`Content section with ID '${targetId}' not found.`);
                 }
@@ -364,6 +435,10 @@ document.addEventListener('DOMContentLoaded', async function () {
                 if (initialTargetId === 'blacklists') {
                     fetchBlacklistEntries(); // This will refresh the table and update the count
                 }
+                // If the initial section is 'requests', fetch data immediately
+                // if (initialTargetId === 'requests') {
+                //     fetchEventRequests(); // Assuming you'll implement this later
+                // }
             }
         } else {
              // Default to showing the 'home' section if no active link is set
@@ -378,66 +453,127 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
 
 
-        // --- Modal & Blacklist Buttons Logic ---
+        // --- Blacklist Modal Logic ---
 
         // Function to open the blacklist modal
-        const openModal = () => {
+        const openBlacklistModal = () => {
             if (blacklistModal) {
                 blacklistModal.classList.remove('hidden');
-                console.log("Modal opened. hidden class removed."); // Debug log
+                console.log("Blacklist Modal opened. hidden class removed."); // Debug log
             } else {
                 console.error("Blacklist modal element not found during open attempt in initializeDashboardFeatures!");
             }
         };
 
         // Function to close the blacklist modal
-        const closeModal = () => {
+        const closeBlacklistModal = () => {
             if (blacklistModal) {
                 blacklistModal.classList.add('hidden');
-                console.log("Modal closed. hidden class added."); // Debug log
+                console.log("Blacklist Modal closed. hidden class added."); // Debug log
             } else {
                 console.error("Blacklist modal element not found during close attempt in initializeDashboardFeatures!");
             }
         };
 
-
-        // Attach event listeners for the modal and blacklist operations
-        if (modalOpenBtn) {
-            console.log("Modal Open button found. Attaching click listener."); // Debug log
-            modalOpenBtn.addEventListener('click', openModal);
+        // Attach event listeners for the blacklist modal
+        if (blacklistModalOpenBtn) {
+            console.log("Blacklist Modal Open button found. Attaching click listener."); // Debug log
+            blacklistModalOpenBtn.addEventListener('click', openBlacklistModal);
         } else {
-            console.error("Open Modal button with ID 'open-modal-btn' not found in initializeDashboardFeatures.");
+            console.error("Open Blacklist Modal button with ID 'open-modal-btn' not found in initializeDashboardFeatures.");
         }
 
-        if (modalCloseBtnCancel) {
-            console.log("Modal Cancel button found. Attaching click listener."); // Debug log
-            modalCloseBtnCancel.addEventListener('click', closeModal);
+        if (blacklistModalCloseBtnCancel) {
+            console.log("Blacklist Modal Cancel button found. Attaching click listener."); // Debug log
+            blacklistModalCloseBtnCancel.addEventListener('click', closeBlacklistModal);
         } else {
-            console.error("Close Modal (cancel) button with ID 'close-modal-btn-cancel' not found in initializeDashboardFeatures.");
+            console.error("Close Blacklist Modal (cancel) button with ID 'close-modal-btn-cancel' not found in initializeDashboardFeatures.");
         }
 
-        // Close modal if the user clicks on the background overlay
+        // Close blacklist modal if the user clicks on the background overlay
         if (blacklistModal) {
             console.log("Blacklist modal found. Attaching overlay click listener."); // Debug log
             blacklistModal.addEventListener('click', function (event) {
                 if (event.target === blacklistModal) { // Only close if click is directly on the overlay
-                    closeModal();
+                    closeBlacklistModal();
                 }
             });
         }
 
         // Event listener for the save blacklist button inside the modal
-        if (modalSaveBtn) {
-            console.log("Modal Save button found. Attaching click listener."); // Debug log
-            modalSaveBtn.addEventListener('click', async () => {
+        if (blacklistModalSaveBtn) {
+            console.log("Blacklist Modal Save button found. Attaching click listener."); // Debug log
+            blacklistModalSaveBtn.addEventListener('click', async () => {
                 const success = await addBlacklistEntry();
                 if (success) {
-                    closeModal(); // Close modal only if entry was added successfully
+                    closeBlacklistModal(); // Close modal only if entry was added successfully
                 }
             });
         } else {
             console.error("Save Blacklist button with ID 'save-blacklist-btn' not found in initializeDashboardFeatures.");
         }
+
+
+        // --- Event Request Modal Logic ---
+
+        // Function to open the event request modal
+        const openEventRequestModal = () => {
+            if (eventRequestModal) {
+                eventRequestModal.classList.remove('hidden');
+                console.log("Event Request Modal opened. hidden class removed."); // Debug log
+            } else {
+                console.error("Event Request modal element not found during open attempt in initializeDashboardFeatures!");
+            }
+        };
+
+        // Function to close the event request modal
+        const closeEventRequestModal = () => {
+            if (eventRequestModal) {
+                eventRequestModal.classList.add('hidden');
+                console.log("Event Request Modal closed. hidden class added."); // Debug log
+            } else {
+                console.error("Event Request modal element not found during close attempt in initializeDashboardFeatures!");
+            }
+        };
+
+        // Attach event listeners for the event request modal
+        if (eventModalOpenBtn) {
+            console.log("Event Request Modal Open button found. Attaching click listener."); // Debug log
+            eventModalOpenBtn.addEventListener('click', openEventRequestModal);
+        } else {
+            console.error("Open Event Modal button with ID 'open-event-modal-btn' not found in initializeDashboardFeatures.");
+        }
+
+        if (eventModalCloseBtnCancel) {
+            console.log("Event Request Modal Cancel button found. Attaching click listener."); // Debug log
+            eventModalCloseBtnCancel.addEventListener('click', closeEventRequestModal);
+        } else {
+            console.error("Close Event Modal (cancel) button with ID 'close-event-modal-btn-cancel' not found in initializeDashboardFeatures.");
+        }
+
+        // Close event request modal if the user clicks on the background overlay
+        if (eventRequestModal) {
+            console.log("Event Request modal found. Attaching overlay click listener."); // Debug log
+            eventRequestModal.addEventListener('click', function (event) {
+                if (event.target === eventRequestModal) { // Only close if click is directly on the overlay
+                    closeEventRequestModal();
+                }
+            });
+        }
+
+        // Event listener for the save event request button inside the modal
+        if (eventModalSaveBtn) {
+            console.log("Event Request Modal Save button found. Attaching click listener."); // Debug log
+            eventModalSaveBtn.addEventListener('click', async () => {
+                const success = await addEventRequest();
+                if (success) {
+                    closeEventRequestModal(); // Close modal only if request was added successfully
+                }
+            });
+        } else {
+            console.error("Save Event Request button with ID 'save-event-request-btn' not found in initializeDashboardFeatures.");
+        }
+
     } // End of initializeDashboardFeatures function
 
     // --- Main Entry Point: DOMContentLoaded ---

@@ -8,7 +8,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="icon" href="AdminPanelFavicon.png" type="image/x-icon">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Assuming style.css contains additional custom styles -->
     <link rel="stylesheet" href="style.css">
@@ -105,7 +104,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                         <div class="bg-white p-6 rounded-lg shadow-lg">
                             <h3 class="text-lg font-medium text-gray-700">Total Concurrent Users</h3>
-                            <p class="text-3xl font-bold text-black-600 mt-2">N/A</p>
+                            <p class="text-3xl font-bold text-black-600 mt-2">0</p>
                         </div>
                         <div class="bg-white p-6 rounded-lg shadow-lg">
                             <h3 class="text-lg font-medium text-gray-700">New Event/Insert Requests</h3>
@@ -113,6 +112,7 @@
                         </div>
                         <div class="bg-white p-6 rounded-lg shadow-lg">
                             <h3 class="text-lg font-medium text-gray-700">Blacklisted Users</h3>
+                            <!-- New element to display the count -->
                             <p id="blacklisted-users-count" class="text-3xl font-bold text-black-600 mt-2">0</p>
                         </div>
                     </div>
@@ -153,10 +153,44 @@
                 <!-- Requests Section -->
                 <section id="requests" class="content-section hidden">
                     <div class="bg-white p-6 rounded-lg shadow-lg">
-                        <h3 class="text-xl font-semibold mb-4">Pending Requests</h3>
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-semibold">Pending Requests</h3>
+                            <!-- NEW BUTTON FOR EVENT/INSERT REQUESTS -->
+                            <button id="open-event-modal-btn"
+                                class="text-sm bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded-lg flex items-center">
+                                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                </svg>
+                                Add New Request
+                            </button>
+                        </div>
                         <p class="text-gray-600">Review and approve or deny incoming event insertion requests.</p>
                         <div class="mt-6 space-y-4">
-                            <!--Item here-->
+                            <div class="border rounded-lg p-4 flex items-center justify-between hover:bg-gray-50">
+                                <div>
+                                    <p class="font-semibold">Event: Summer Festival</p>
+                                    <p class="text-sm text-gray-500">Submitted by: John Doe</p>
+                                </div>
+                                <div class="space-x-2">
+                                    <button
+                                        class="text-sm bg-green-500 hover:bg-green-700 text-white py-1 px-3 rounded-lg">Approve</button>
+                                    <button
+                                        class="text-sm bg-red-500 hover:bg-red-700 text-white py-1 px-3 rounded-lg">Deny</button>
+                                </div>
+                            </div>
+                            <div class="border rounded-lg p-4 flex items-center justify-between hover:bg-gray-50">
+                                <div>
+                                    <p class="font-semibold">Event: Tech Conference 2025</p>
+                                    <p class="text-sm text-gray-500">Submitted by: Jane Smith</p>
+                                </div>
+                                <div class="space-x-2">
+                                    <button
+                                        class="text-sm bg-green-500 hover:bg-green-700 text-white py-1 px-3 rounded-lg">Approve</button>
+                                    <button
+                                        class="text-sm bg-red-500 hover:bg-red-700 text-white py-1 px-3 rounded-lg">Deny</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -200,8 +234,56 @@
                         Cancel
                     </button>
                     <button id="save-blacklist-btn"
-                        class="px-4 py-2 bg-green-500 text-white text-base font-medium rounded-md w-auto shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-300">
+                        class="px-4 py-2 bg-green-500 hover:bg-green-700 text-white text-base font-medium rounded-md w-auto shadow-sm focus:outline-none focus:ring-2 focus:ring-green-300">
                         Save
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NEW Event/Insert Request Modal -->
+    <div id="event-request-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50 flex items-center justify-center">
+        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+            <div class="mt-3 text-center">
+                <h3 class="text-lg leading-6 font-medium text-gray-900">Add New Event/Insert Request</h3>
+                <div class="mt-4 px-7 py-3">
+                    <div>
+                        <label for="event-name-input" class="block text-sm font-medium text-gray-700 text-left">Event Name:</label>
+                        <input type="text" id="event-name-input"
+                            class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="e.g., Summer Festival">
+                    </div>
+                    <div class="mt-4">
+                        <label for="event-description-input" class="block text-sm font-medium text-gray-700 text-left">Description:</label>
+                        <textarea id="event-description-input" rows="3"
+                            class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Brief description of the event/request"></textarea>
+                    </div>
+                    <div class="mt-4">
+                        <label for="event-date-input" class="block text-sm font-medium text-gray-700 text-left">Date (Optional):</label>
+                        <input type="date" id="event-date-input"
+                            class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                    </div>
+                    <div class="mt-4">
+                        <label for="event-type-select" class="block text-sm font-medium text-gray-700 text-left">Type:</label>
+                        <select id="event-type-select"
+                            class="mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Select Type</option>
+                            <option value="Event">Event</option>
+                            <option value="Insert">Insert</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="items-center px-4 py-3 space-x-4 flex justify-end">
+                    <button id="close-event-modal-btn-cancel"
+                        class="px-4 py-2 bg-gray-300 text-gray-800 text-base font-medium rounded-md w-auto shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300">
+                        Cancel
+                    </button>
+                    <button id="save-event-request-btn"
+                        class="px-4 py-2 bg-blue-500 hover:bg-blue-700 text-white text-base font-medium rounded-md w-auto shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-300">
+                        Submit Request
                     </button>
                 </div>
             </div>
