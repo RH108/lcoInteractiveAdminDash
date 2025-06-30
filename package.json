@@ -1,0 +1,20 @@
+{
+  "name": "roblox-admin-panel",
+  "version": "1.0.0",
+  "description": "Admin panel with Roblox OAuth",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "axios": "^1.10.0",
+    "dotenv": "^16.6.1",
+    "express": "^4.21.2",
+    "express-session": "^1.18.1",
+    "mongodb": "^6.17.0",
+    "mongoose": "^8.16.1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
