@@ -20,6 +20,7 @@ async function fetchBlacklistEntries() {
     try {
         // Send a GET request to the backend API to retrieve blacklist data
         const response = await fetch('/api/blacklist');
+        const response_admin = await fetch('/api/event-requests')
 
         // Check if the HTTP response was successful
         if (!response.ok) {
@@ -27,7 +28,13 @@ async function fetchBlacklistEntries() {
             throw new Error(`HTTP error! Status: ${response.status}. Response: ${errorText}`);
         }
 
+        if (!response_admin.ok) {
+            const errorText = await response_admin.text(); // Get raw text to help debug if JSON parsing fails
+            throw new Error(`HTTP error! Status: ${response.status}. Response: ${errorText}`);
+        }
+
         const entries = await response.json(); // Parse the JSON response
+        const entries_requests = await response_admin.json()
         console.log("Fetched blacklist entries:", entries); // Debug log: show fetched data
 
         // Update the blacklisted users count
@@ -36,7 +43,7 @@ async function fetchBlacklistEntries() {
         }
 
         if (adminRequestCountElement) {
-            adminRequestCountElement.textContent = entries.length;
+            adminRequestCountElement.textContent = entries_requests.length;
         }
 
         // Iterate over each entry and append it as a new row to the table
