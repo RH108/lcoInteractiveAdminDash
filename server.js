@@ -93,12 +93,9 @@ const eventRequestSchema = new mongoose.Schema({
 
 const EventRequest = mongoose.model('EventRequest', eventRequestSchema);
 
-// --- NEW: MongoDB Schema and Model for Ban Requests (Still present for potential future use or other endpoints) ---
-// Note: The /api/roblox/ban-request endpoint will now directly add to 'blacklisted_users'.
-// This schema remains defined in case you want to process ban requests through the admin panel later
-// or have other game-related data that needs this structure.
+// --- MongoDB Schema and Model for Ban Requests (Still present for potential future use or other endpoints) ---
 const banRequestSchema = new mongoose.Schema({
-    robloxUserId: { type: String, required: false }, // MADE OPTIONAL
+    robloxUserId: { type: String, required: false },
     robloxUsername: { type: String, required: true },
     reason: { type: String, required: true },
     moderatorUserId: { type: String, required: true },
@@ -260,7 +257,7 @@ app.get('/api/check-group-membership', async (req, res) => {
 
 // --- Blacklist API Endpoints (using Mongoose) ---
 
-// GET all blacklist entries
+// GET all blacklist entries (for frontend dashboard)
 app.get('/api/blacklist', async (req, res) => {
     try {
         const entries = await BlacklistEntry.find({});
@@ -271,7 +268,7 @@ app.get('/api/blacklist', async (req, res) => {
     }
 });
 
-// POST a new blacklist entry
+// POST a new blacklist entry (from frontend dashboard)
 app.post('/api/blacklist', async (req, res) => {
     const { username, reason, platform } = req.body;
 
@@ -296,7 +293,7 @@ app.post('/api/blacklist', async (req, res) => {
     }
 });
 
-// DELETE a blacklist entry by ID
+// DELETE a blacklist entry by ID (from frontend dashboard)
 app.delete('/api/blacklist/:id', async (req, res) => {
     const { id } = req.params; // Get the ID from the URL parameter
 
@@ -358,15 +355,14 @@ app.post('/api/event-requests', async (req, res) => {
     }
 });
 
-// --- In-Game Ban Request Endpoint (Now adds directly to blacklisted_users) ---
+// --- In-Game Ban Request Endpoint (Adds directly to blacklisted_users) ---
 
 // POST endpoint for Roblox game to send ban requests
 app.post('/api/roblox/ban-request', authenticateGameRequest, async (req, res) => {
-    // robloxUserId is now optional from the game's side, but not directly mapped to blacklist schema
-    const { robloxUsername, reason, platform, moderatorUserId, moderatorUsername } = req.body;
+    const { robloxUsername, reason, moderatorUserId, moderatorUsername } = req.body;
 
     // Basic validation: robloxUsername, reason, moderatorUserId, moderatorUsername are required for a ban
-    if (!robloxUsername || !reason || !moderatorUserId || !moderatorUsername || !platform) {
+    if (!robloxUsername || !reason || !moderatorUserId || !moderatorUsername) {
         console.warn('Missing required ban data from Roblox game:', req.body);
         return res.status(400).json({ message: 'Missing required ban data (robloxUsername, reason, moderatorUserId, moderatorUsername are required).' });
     }
@@ -376,7 +372,7 @@ app.post('/api/roblox/ban-request', authenticateGameRequest, async (req, res) =>
         const newBlacklistEntry = new BlacklistEntry({
             username: robloxUsername,
             reason: reason,
-            platform: platform,
+            platform: 'Roblox In-Game', // Default platform for in-game bans
             addedBy: {
                 userId: moderatorUserId,
                 username: moderatorUsername
@@ -391,6 +387,40 @@ app.post('/api/roblox/ban-request', authenticateGameRequest, async (req, res) =>
         res.status(500).json({ message: 'Failed to process ban request and add user to blacklist.' });
     }
 });
+
+// --- NEW: In-Game Check Ban Endpoint ---
+
+// GET endpoint for Roblox game to check if a player is banned
+app.get('/api/roblox/check-ban', authenticateGameRequest, async (req, res) => {
+    const { username } = req.query; // Get username from query parameter
+
+    if (!username) {
+        console.warn('Check ban request missing username query parameter.');
+        return res.status(400).json({ message: 'Username query parameter is required.' });
+    }
+
+    try {
+        // Find if a user with the given username exists in the blacklisted_users collection
+        // Case-insensitive search for username
+        const bannedUser = await BlacklistEntry.findOne({ username: new RegExp(`^${username}$`, 'i') });
+
+        if (bannedUser) {
+            console.log(`Player '${username}' found in blacklist.`);
+            res.json({
+                isBanned: true,
+                reason: bannedUser.reason || "You are banned from this experience.",
+                platform: bannedUser.platform
+            });
+        } else {
+            console.log(`Player '${username}' not found in blacklist.`);
+            res.json({ isBanned: false });
+        }
+    } catch (error) {
+        console.error('Error checking ban status:', error);
+        res.status(500).json({ message: 'Failed to check ban status.' });
+    }
+});
+
 
 // --- Existing Ban Request Endpoints (These now refer to the 'ban_requests' collection, if you decide to use it for review) ---
 // Note: These endpoints are for managing requests in the 'ban_requests' collection.
