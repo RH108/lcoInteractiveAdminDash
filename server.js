@@ -95,7 +95,7 @@ const EventRequest = mongoose.model('EventRequest', eventRequestSchema);
 
 // --- NEW: MongoDB Schema and Model for Ban Requests ---
 const banRequestSchema = new mongoose.Schema({
-    robloxUserId: { type: String, required: true },
+    robloxUserId: { type: String, required: false }, // MADE OPTIONAL
     robloxUsername: { type: String, required: true },
     reason: { type: String, required: true },
     moderatorUserId: { type: String, required: true },
@@ -359,16 +359,18 @@ app.post('/api/event-requests', async (req, res) => {
 
 // POST endpoint for Roblox game to send ban requests
 app.post('/api/roblox/ban-request', authenticateGameRequest, async (req, res) => {
+    // robloxUserId is now optional
     const { robloxUserId, robloxUsername, reason, moderatorUserId, moderatorUsername } = req.body;
 
-    // Basic validation
-    if (!robloxUserId || !robloxUsername || !reason || !moderatorUserId || !moderatorUsername) {
-        return res.status(400).json({ message: 'Missing required ban request data.' });
+    // Basic validation: robloxUsername, reason, moderatorUserId, moderatorUsername are still required
+    if (!robloxUsername || !reason || !moderatorUserId || !moderatorUsername) {
+        console.warn('Missing required ban request data from Roblox game:', req.body);
+        return res.status(400).json({ message: 'Missing required ban request data (robloxUsername, reason, moderatorUserId, moderatorUsername are required).' });
     }
 
     try {
         const newBanRequest = new BanRequest({
-            robloxUserId,
+            robloxUserId: robloxUserId, // Will be undefined if not provided, which is now allowed by schema
             robloxUsername,
             reason,
             moderatorUserId,
