@@ -36,6 +36,7 @@ async function fetchBlacklistEntries() {
         const entries = await response.json(); // Parse the JSON response
         const entries_requests = await response_admin.json()
         console.log("Fetched blacklist entries:", entries); // Debug log: show fetched data
+        console.log("Fetched requests data: ", entries_requests)
 
         // Update the blacklisted users count
         if (blacklistedUsersCountElement) {
