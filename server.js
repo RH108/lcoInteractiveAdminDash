@@ -26,6 +26,11 @@ const robloxGroupConfig = {
     openCloudApiKey: process.env.ROBLOX_OPENCLOUD_API_KEY // API Key for Roblox Open Cloud (Group API)
 };
 
+// Roblox Game HTTP Integration Configuration
+const robloxGameConfig = {
+    secretKey: process.env.ROBLOX_GAME_SECRET_KEY // Secret key for authenticating requests from Roblox games
+};
+
 // Express Session Middleware
 app.set('trust proxy', 1); // Trust first proxy (Render's proxy)
 app.use(session({
@@ -70,7 +75,7 @@ const blacklistEntrySchema = new mongoose.Schema({
 const BlacklistEntry = mongoose.model('BlacklistEntry', blacklistEntrySchema);
 
 
-// --- NEW: MongoDB Schema and Model for Event/Insert Requests ---
+// --- MongoDB Schema and Model for Event/Insert Requests ---
 const eventRequestSchema = new mongoose.Schema({
     name: { type: String, required: true },
     description: { type: String },
@@ -87,6 +92,45 @@ const eventRequestSchema = new mongoose.Schema({
 });
 
 const EventRequest = mongoose.model('EventRequest', eventRequestSchema);
+
+// --- NEW: MongoDB Schema and Model for Ban Requests ---
+const banRequestSchema = new mongoose.Schema({
+    robloxUserId: { type: String, required: true },
+    robloxUsername: { type: String, required: true },
+    reason: { type: String, required: true },
+    moderatorUserId: { type: String, required: true },
+    moderatorUsername: { type: String, required: true },
+    status: { type: String, default: 'Pending', enum: ['Pending', 'Approved', 'Denied'] },
+    createdAt: { type: Date, default: Date.now },
+    processedAt: { type: Date },
+    processedBy: {
+        userId: { type: String },
+        username: { type: String }
+    }
+}, {
+    collection: 'ban_requests' // New collection for ban requests
+});
+
+const BanRequest = mongoose.model('BanRequest', banRequestSchema);
+
+
+// --- Middleware for authenticating Roblox game requests ---
+function authenticateGameRequest(req, res, next) {
+    const authHeader = req.headers['authorization'];
+    if (!authHeader) {
+        console.warn('Authentication failed: Authorization header missing.');
+        return res.status(401).json({ message: 'Authorization header missing.' });
+    }
+
+    const token = authHeader.split(' ')[1]; // Expects "Bearer YOUR_SECRET_KEY"
+
+    if (!token || token !== robloxGameConfig.secretKey) {
+        console.warn('Authentication failed: Invalid or missing secret key.');
+        return res.status(403).json({ message: 'Invalid or missing secret key.' });
+    }
+
+    next(); // If key is valid, proceed to the next middleware/route handler
+}
 
 
 // --- Roblox OAuth Routes ---
@@ -272,7 +316,7 @@ app.delete('/api/blacklist/:id', async (req, res) => {
 });
 
 
-// --- NEW: Event Request API Endpoints (using Mongoose) ---
+// --- Event Request API Endpoints (using Mongoose) ---
 
 // GET all event requests
 app.get('/api/event-requests', async (req, res) => {
@@ -310,6 +354,92 @@ app.post('/api/event-requests', async (req, res) => {
         res.status(500).json({ message: 'Error submitting event request' });
     }
 });
+
+// --- NEW: In-Game Ban Request Endpoints ---
+
+// POST endpoint for Roblox game to send ban requests
+app.post('/api/roblox/ban-request', authenticateGameRequest, async (req, res) => {
+    const { robloxUserId, robloxUsername, reason, moderatorUserId, moderatorUsername } = req.body;
+
+    // Basic validation
+    if (!robloxUserId || !robloxUsername || !reason || !moderatorUserId || !moderatorUsername) {
+        return res.status(400).json({ message: 'Missing required ban request data.' });
+    }
+
+    try {
+        const newBanRequest = new BanRequest({
+            robloxUserId,
+            robloxUsername,
+            reason,
+            moderatorUserId,
+            moderatorUsername,
+            status: 'Pending' // Default status for new requests
+        });
+
+        const savedBanRequest = await newBanRequest.save();
+        console.log('Received and saved ban request from game:', savedBanRequest);
+        res.status(201).json({ message: 'Ban request received and saved successfully!', request: savedBanRequest });
+    } catch (error) {
+        console.error('Error saving ban request from game:', error);
+        res.status(500).json({ message: 'Failed to save ban request.' });
+    }
+});
+
+// GET endpoint for admin panel to fetch all ban requests
+app.get('/api/ban-requests', async (req, res) => {
+    try {
+        const banRequests = await BanRequest.find({});
+        res.json(banRequests);
+    } catch (error) {
+        console.error('Error fetching ban requests:', error);
+        res.status(500).json({ message: 'Error fetching ban requests' });
+    }
+});
+
+// PATCH endpoint to approve a ban request
+app.patch('/api/ban-requests/:id/approve', async (req, res) => {
+    const { id } = req.params;
+    const processedBy = req.session.user ? { userId: req.session.user.sub, username: req.session.user.name } : null;
+
+    try {
+        const updatedRequest = await BanRequest.findByIdAndUpdate(
+            id,
+            { status: 'Approved', processedAt: new Date(), processedBy: processedBy },
+            { new: true } // Return the updated document
+        );
+
+        if (!updatedRequest) {
+            return res.status(404).json({ message: 'Ban request not found.' });
+        }
+        res.json({ message: 'Ban request approved successfully!', request: updatedRequest });
+    } catch (error) {
+        console.error('Error approving ban request:', error);
+        res.status(500).json({ message: 'Failed to approve ban request.' });
+    }
+});
+
+// PATCH endpoint to deny a ban request
+app.patch('/api/ban-requests/:id/deny', async (req, res) => {
+    const { id } = req.params;
+    const processedBy = req.session.user ? { userId: req.session.user.sub, username: req.session.user.name } : null;
+
+    try {
+        const updatedRequest = await BanRequest.findByIdAndUpdate(
+            id,
+            { status: 'Denied', processedAt: new Date(), processedBy: processedBy },
+            { new: true } // Return the updated document
+        );
+
+        if (!updatedRequest) {
+            return res.status(404).json({ message: 'Ban request not found.' });
+        }
+        res.json({ message: 'Ban request denied successfully!', request: updatedRequest });
+    } catch (error) {
+        console.error('Error denying ban request:', error);
+        res.status(500).json({ message: 'Failed to deny ban request.' });
+    }
+});
+
 
 // Start the server
 app.listen(port, () => {
