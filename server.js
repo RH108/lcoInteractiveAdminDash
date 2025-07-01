@@ -93,7 +93,10 @@ const eventRequestSchema = new mongoose.Schema({
 
 const EventRequest = mongoose.model('EventRequest', eventRequestSchema);
 
-// --- NEW: MongoDB Schema and Model for Ban Requests ---
+// --- NEW: MongoDB Schema and Model for Ban Requests (Still present for potential future use or other endpoints) ---
+// Note: The /api/roblox/ban-request endpoint will now directly add to 'blacklisted_users'.
+// This schema remains defined in case you want to process ban requests through the admin panel later
+// or have other game-related data that needs this structure.
 const banRequestSchema = new mongoose.Schema({
     robloxUserId: { type: String, required: false }, // MADE OPTIONAL
     robloxUsername: { type: String, required: true },
@@ -355,42 +358,48 @@ app.post('/api/event-requests', async (req, res) => {
     }
 });
 
-// --- NEW: In-Game Ban Request Endpoints ---
+// --- In-Game Ban Request Endpoint (Now adds directly to blacklisted_users) ---
 
 // POST endpoint for Roblox game to send ban requests
 app.post('/api/roblox/ban-request', authenticateGameRequest, async (req, res) => {
-    // robloxUserId is now optional
-    const { robloxUserId, robloxUsername, reason, moderatorUserId, moderatorUsername } = req.body;
+    // robloxUserId is now optional from the game's side, but not directly mapped to blacklist schema
+    const { robloxUsername, reason, moderatorUserId, moderatorUsername } = req.body;
 
-    // Basic validation: robloxUsername, reason, moderatorUserId, moderatorUsername are still required
+    // Basic validation: robloxUsername, reason, moderatorUserId, moderatorUsername are required for a ban
     if (!robloxUsername || !reason || !moderatorUserId || !moderatorUsername) {
-        console.warn('Missing required ban request data from Roblox game:', req.body);
-        return res.status(400).json({ message: 'Missing required ban request data (robloxUsername, reason, moderatorUserId, moderatorUsername are required).' });
+        console.warn('Missing required ban data from Roblox game:', req.body);
+        return res.status(400).json({ message: 'Missing required ban data (robloxUsername, reason, moderatorUserId, moderatorUsername are required).' });
     }
 
     try {
-        const newBanRequest = new BanRequest({
-            robloxUserId: robloxUserId, // Will be undefined if not provided, which is now allowed by schema
-            robloxUsername,
-            reason,
-            moderatorUserId,
-            moderatorUsername,
-            status: 'Pending' // Default status for new requests
+        // Create a new BlacklistEntry directly
+        const newBlacklistEntry = new BlacklistEntry({
+            username: robloxUsername,
+            reason: reason,
+            platform: 'Roblox In-Game', // Default platform for in-game bans
+            addedBy: {
+                userId: moderatorUserId,
+                username: moderatorUsername
+            }
         });
 
-        const savedBanRequest = await newBanRequest.save();
-        console.log('Received and saved ban request from game:', savedBanRequest);
-        res.status(201).json({ message: 'Ban request received and saved successfully!', request: savedBanRequest });
+        const savedEntry = await newBlacklistEntry.save();
+        console.log('Received ban request from game and added directly to blacklisted_users:', savedEntry);
+        res.status(201).json({ message: 'Ban request processed and user added to blacklist successfully!', entry: savedEntry });
     } catch (error) {
-        console.error('Error saving ban request from game:', error);
-        res.status(500).json({ message: 'Failed to save ban request.' });
+        console.error('Error processing ban request from game and adding to blacklist:', error);
+        res.status(500).json({ message: 'Failed to process ban request and add user to blacklist.' });
     }
 });
 
-// GET endpoint for admin panel to fetch all ban requests
+// --- Existing Ban Request Endpoints (These now refer to the 'ban_requests' collection, if you decide to use it for review) ---
+// Note: These endpoints are for managing requests in the 'ban_requests' collection.
+// If your game directly adds to 'blacklisted_users', these might become less relevant
+// unless you introduce a review process for other types of ban requests.
+
 app.get('/api/ban-requests', async (req, res) => {
     try {
-        const banRequests = await BanRequest.find({});
+        const banRequests = await BanRequest.find({}); // Fetches from 'ban_requests'
         res.json(banRequests);
     } catch (error) {
         console.error('Error fetching ban requests:', error);
@@ -398,7 +407,6 @@ app.get('/api/ban-requests', async (req, res) => {
     }
 });
 
-// PATCH endpoint to approve a ban request
 app.patch('/api/ban-requests/:id/approve', async (req, res) => {
     const { id } = req.params;
     const processedBy = req.session.user ? { userId: req.session.user.sub, username: req.session.user.name } : null;
@@ -407,7 +415,7 @@ app.patch('/api/ban-requests/:id/approve', async (req, res) => {
         const updatedRequest = await BanRequest.findByIdAndUpdate(
             id,
             { status: 'Approved', processedAt: new Date(), processedBy: processedBy },
-            { new: true } // Return the updated document
+            { new: true }
         );
 
         if (!updatedRequest) {
@@ -420,7 +428,6 @@ app.patch('/api/ban-requests/:id/approve', async (req, res) => {
     }
 });
 
-// PATCH endpoint to deny a ban request
 app.patch('/api/ban-requests/:id/deny', async (req, res) => {
     const { id } = req.params;
     const processedBy = req.session.user ? { userId: req.session.user.sub, username: req.session.user.name } : null;
@@ -429,7 +436,7 @@ app.patch('/api/ban-requests/:id/deny', async (req, res) => {
         const updatedRequest = await BanRequest.findByIdAndUpdate(
             id,
             { status: 'Denied', processedAt: new Date(), processedBy: processedBy },
-            { new: true } // Return the updated document
+            { new: true }
         );
 
         if (!updatedRequest) {
