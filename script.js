@@ -52,7 +52,7 @@ async function fetchBlacklistEntries() {
             const newRow = document.createElement('tr');
             // Populate the row with entry data. index + 1 for display ID, entry._id for data-id attribute for deletion
             newRow.innerHTML = `
-                <td class="text-left py-3 px-4">${index + 1}</td> <!-- Sequential display ID -->
+                <td class="text-left py-3 px-4">${index + 1}</td>
                 <td class="text-left py-3 px-4">${entry.username}</td>
                 <td class="text-left py-3 px-4">${entry.platform}</td>
                 <td class="text-left py-3 px-4">${entry.reason || 'Not Applicable'}</td>
