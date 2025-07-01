@@ -359,10 +359,10 @@ app.post('/api/event-requests', async (req, res) => {
 
 // POST endpoint for Roblox game to send ban requests
 app.post('/api/roblox/ban-request', authenticateGameRequest, async (req, res) => {
-    const { robloxUsername, reason, moderatorUserId, moderatorUsername } = req.body;
+    const { robloxUsername, reason, platform, moderatorUserId, moderatorUsername } = req.body;
 
     // Basic validation: robloxUsername, reason, moderatorUserId, moderatorUsername are required for a ban
-    if (!robloxUsername || !reason || !moderatorUserId || !moderatorUsername) {
+    if (!robloxUsername || !reason || !moderatorUserId || !moderatorUsername || !platform) {
         console.warn('Missing required ban data from Roblox game:', req.body);
         return res.status(400).json({ message: 'Missing required ban data (robloxUsername, reason, moderatorUserId, moderatorUsername are required).' });
     }
@@ -372,7 +372,7 @@ app.post('/api/roblox/ban-request', authenticateGameRequest, async (req, res) =>
         const newBlacklistEntry = new BlacklistEntry({
             username: robloxUsername,
             reason: reason,
-            platform: 'Roblox In-Game', // Default platform for in-game bans
+            platform: platform, // Default platform for in-game bans
             addedBy: {
                 userId: moderatorUserId,
                 username: moderatorUsername
